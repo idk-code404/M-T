@@ -70,7 +70,7 @@ npx http-server
 
     Open in browser
     Navigate to http://localhost:8000 or open index.html directly.
-
+```
 📖 Usage Guide
 Embedding a Movie
 HTML
