@@ -28,16 +28,10 @@ const GENRES = {
     10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
 };
 
-// Active filters
-let activeFilters = {
-    year: '',
-    rating: '',
-    genres: [],
-    search: ''
-};
+// Navigation state
+let currentSection = 'movies';
 
 // ==================== THEME MANAGEMENT ====================
-
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const currentTheme = savedTheme || 'dark';
@@ -60,7 +54,6 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 // ==================== AUTHENTICATION ====================
-
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('authBtn').style.display = 'none';
@@ -133,6 +126,39 @@ function logoutUser() {
     auth.signOut().then(() => {
         alert('Logged out successfully!');
     });
+}
+
+// ==================== NAVIGATION ====================
+
+function showSection(sectionName) {
+    // Update active nav link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Hide all sections
+    const sections = ['movies', 'tv', 'search', 'continue-watching', 'searchResults'];
+    sections.forEach(section => {
+        document.getElementById(section).style.display = 'none';
+    });
+    
+    // Show selected section
+    document.getElementById(sectionName).style.display = 'block';
+    
+    // Special handling for sections
+    if (sectionName === 'search') {
+        document.getElementById('filtersSection').style.display = 'none';
+    } else if (sectionName !== 'searchResults') {
+        document.getElementById('filtersSection').style.display = 'block';
+    }
+    
+    currentSection = sectionName;
+    
+    // Load section-specific data
+    if (sectionName === 'continue-watching') {
+        loadContinueWatching();
+    }
 }
 
 // ==================== TMDB API FUNCTIONS ====================
@@ -385,7 +411,7 @@ function loadTVShows(filteredData = null) {
     });
 }
 
-// ==================== SEARCH & CLEAR ====================
+// ==================== SEARCH FUNCTIONS ====================
 
 function clearSearch() {
     document.getElementById('searchInput').value = '';
@@ -394,6 +420,10 @@ function clearSearch() {
     document.getElementById('movies').style.display = 'block';
     document.getElementById('tv').style.display = 'block';
     document.getElementById('continue-watching').style.display = auth.currentUser ? 'block' : 'none';
+    
+    if (currentSection === 'movies' || currentSection === 'tv') {
+        applyFilters();
+    }
 }
 
 async function searchContent() {
@@ -403,6 +433,8 @@ async function searchContent() {
         clearSearch();
         return;
     }
+    
+    activeFilters.search = searchTerm;
     
     document.getElementById('searchResults').style.display = 'block';
     document.getElementById('movies').style.display = 'none';
@@ -463,12 +495,102 @@ async function searchContent() {
     }
 }
 
+// NEW: Advanced Search for Search Tab
+async function advancedSearch() {
+    const query = document.getElementById('advancedSearchInput').value.trim();
+    const contentType = document.getElementById('contentTypeFilter').value;
+    const yearFilter = document.getElementById('advancedYearFilter').value;
+    const ratingFilter = document.getElementById('advancedRatingFilter').value;
+    const genreFilter = document.getElementById('advancedGenreFilter').value;
+    
+    if (!query && !genreFilter && !yearFilter && !ratingFilter) {
+        alert('Please enter at least one search criteria');
+        return;
+    }
+    
+    const searchGrid = document.getElementById('advancedSearchGrid');
+    searchGrid.classList.add('loading');
+    searchGrid.innerHTML = '<p>Searching with filters...</p>';
+    
+    try {
+        let allResults = [];
+        
+        // Search based on content type
+        if (contentType === '' || contentType === 'movie') {
+            const movieResults = await searchMovies(query);
+            allResults = allResults.concat(movieResults.map(m => ({...m, media_type: 'movie'})));
+        }
+        
+        if (contentType === '' || contentType === 'tv') {
+            const tvResults = await searchTVShows(query);
+            allResults = allResults.concat(tvResults.map(t => ({...t, media_type: 'tv'})));
+        }
+        
+        // Apply additional filters
+        let filteredResults = allResults.filter(item => {
+            // Year filter
+            if (yearFilter) {
+                if (yearFilter === '2020s' && (item.year < 2020 || item.year > 2029)) return false;
+                else if (yearFilter === '2010s' && (item.year < 2010 || item.year > 2019)) return false;
+                else if (yearFilter === '2000s' && (item.year < 2000 || item.year > 2009)) return false;
+                else if (item.year != yearFilter) return false;
+            }
+            
+            // Rating filter
+            if (ratingFilter && parseFloat(item.rating) < parseInt(ratingFilter)) return false;
+            
+            // Genre filter
+            if (genreFilter && (!item.genre_ids || !item.genre_ids.includes(parseInt(genreFilter)))) return false;
+            
+            return true;
+        });
+        
+        // Sort by highest rating
+        filteredResults.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+        
+        searchGrid.classList.remove('loading');
+        searchGrid.innerHTML = '';
+        
+        // Display results
+        if (filteredResults.length === 0) {
+            searchGrid.innerHTML = `
+                <p style="text-align: center; grid-column: 1/-1; padding: 40px;">
+                    No results found for your search criteria
+                </p>
+            `;
+        } else {
+            filteredResults.forEach(item => {
+                searchGrid.appendChild(createMediaCard(item, item.media_type));
+            });
+        }
+        
+    } catch (error) {
+        console.error('Advanced search error:', error);
+        searchGrid.classList.remove('loading');
+        searchGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Advanced search failed. Try again.</p>';
+    }
+}
+
+// NEW: Clear advanced search
+function clearAdvancedSearch() {
+    document.getElementById('advancedSearchInput').value = '';
+    document.getElementById('contentTypeFilter').value = '';
+    document.getElementById('advancedYearFilter').value = '';
+    document.getElementById('advancedRatingFilter').value = '';
+    document.getElementById('advancedGenreFilter').value = '';
+    document.getElementById('advancedSearchGrid').innerHTML = '';
+}
+
 function applyFilters() {
     const yearFilter = document.getElementById('yearFilter').value;
     const ratingFilter = document.getElementById('ratingFilter').value;
     
-    activeFilters.year = yearFilter;
-    activeFilters.rating = ratingFilter;
+    // Hide search results when applying filters
+    if (document.getElementById('searchResults').style.display === 'block') {
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('movies').style.display = 'block';
+        document.getElementById('tv').style.display = 'block';
+    }
     
     Promise.all([getMoviesFromFirebase(), getTVShowsFromFirebase()]).then(([movies, tvShows]) => {
         const filteredMovies = filterData(movies);
@@ -888,6 +1010,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadGenreFilters();
     setupProgressTracking();
     setupStarRating();
+    
+    // Show default section
+    showSection('movies');
 });
 
 // ==================== EVENT LISTENERS ====================
@@ -909,14 +1034,4 @@ document.addEventListener('keydown', function(event) {
         closePlayer();
         closeAuthModal();
     }
-});
-
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    });
 });
