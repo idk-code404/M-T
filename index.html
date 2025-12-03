@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamFlix - Watch Movies & TV Shows</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+        <div class="auth-modal-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('register')">Register</button>
+            </div>
+            <div id="loginForm" class="auth-form">
+                <h2>Login</h2>
+                <input type="email" id="loginEmail" placeholder="Email">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button onclick="loginUser()">Login</button>
+            </div>
+            <div id="registerForm" class="auth-form" style="display: none;">
+                <h2>Register</h2>
+                <input type="text" id="registerName" placeholder="Full Name">
+                <input type="email" id="registerEmail" placeholder="Email">
+                <input type="password" id="registerPassword" placeholder="Password">
+                <button onclick="registerUser()">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">StreamFlix</h1>
+            <nav class="nav">
+                <a href="#movies">Movies</a>
+                <a href="#tv">TV Shows</a>
+                <a href="#continue-watching" id="continueLink" style="display: none;">Continue Watching</a>
+            </nav>
+            <div class="header-controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search...">
+                    <button onclick="searchContent()">Search</button>
+                </div>
+                <button id="themeToggle" data-theme-toggle aria-label="Toggle theme">🌙</button>
+                <button id="authBtn" onclick="openAuthModal()">Login</button>
+                <div id="userProfile" style="display: none;">
+                    <span id="userName"></span>
+                    <button onclick="logoutUser()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>Watch Thousands of Movies & TV Shows</h2>
+            <p>Powered by Vidking Player API</p>
+        </div>
+    </section>
+
+    <!-- Advanced Filters -->
+    <section class="filters-section">
+        <div class="container">
+            <h3>Filter Content</h3>
+            <div class="filter-controls">
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2020s">2020s</option>
+                    <option value="2010s">2010s</option>
+                </select>
+                <select id="ratingFilter">
+                    <option value="">All Ratings</option>
+                    <option value="9">9+</option>
+                    <option value="8">8+</option>
+                    <option value="7">7+</option>
+                    <option value="6">6+</option>
+                </select>
+                <div class="genre-filters">
+                    <label>Genres:</label>
+                    <div id="genreChips"></div>
+                </div>
+                <button onclick="applyFilters()">Apply Filters</button>
+                <button onclick="resetFilters()">Reset</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Continue Watching Section -->
+    <section id="continue-watching" class="content-section" style="display: none;">
+        <div class="container">
+            <h2>Continue Watching</h2>
+            <div class="movie-grid" id="continueGrid"></div>
+        </div>
+    </section>
+
+    <!-- Movie Section -->
+    <section id="movies" class="content-section">
+        <div class="container">
+            <h2>Popular Movies</h2>
+            <div class="movie-grid" id="movieGrid"></div>
+        </div>
+    </section>
+
+    <!-- TV Shows Section -->
+    <section id="tv" class="content-section">
+        <div class="container">
+            <h2>Popular TV Shows</h2>
+            <div class="tv-grid" id="tvGrid"></div>
+        </div>
+    </section>
+
+    <!-- Player Modal -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePlayer()">&times;</span>
+            <div id="playerContainer"></div>
+            <div id="episodeSelector" class="episode-selector" style="display: none;">
+                <h3>Select Episode</h3>
+                <div id="episodeList"></div>
+            </div>
+            <!-- Rating & Review Section -->
+            <div class="rating-section">
+                <h3>Rate & Review</h3>
+                <div class="star-rating" id="userRating">
+                    <span data-rating="1">⭐</span>
+                    <span data-rating="2">⭐</span>
+                    <span data-rating="3">⭐</span>
+                    <span data-rating="4">⭐</span>
+                    <span data-rating="5">⭐</span>
+                </div>
+                <textarea id="reviewText" placeholder="Write your review..."></textarea>
+                <button onclick="submitRating()">Submit Rating</button>
+                <div id="avgRating"></div>
+            </div>
+            <div id="reviewsList" class="reviews-list"></div>
+        </div>
+    </div>
+
+    <!-- Progress Display -->
+    <div id="progressDisplay" class="progress-display"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
