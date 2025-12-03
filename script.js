@@ -3,7 +3,7 @@ const API_BASE = 'https://www.vidking.net/embed';
 const PLAYER_COLOR = 'e50914';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = '7901627e4352f597cecc198c6f0b33e1'; // Replace with your TMDB API key
+const TMDB_API_KEY = '7901627e4352f597cecc198c6f0b33e1'; // Replace with your TMDB API key // ⚠️ REQUIRED: Get from https://www.themoviedb.org/settings/api
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -28,14 +28,19 @@ const GENRES = {
     10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
 };
 
+// Active filters
+let activeFilters = {
+    year: '',
+    rating: '',
+    genres: [],
+    search: ''
+};
+
 // ==================== THEME MANAGEMENT ====================
 // Initialize theme system
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const defaultTheme = 'dark';
-    
-    const currentTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    const currentTheme = savedTheme || 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
     updateThemeButton(currentTheme);
 }
@@ -44,7 +49,6 @@ function initTheme() {
 function updateThemeButton(theme) {
     const button = document.getElementById('themeToggle');
     button.innerHTML = theme === 'dark' ? '☀️' : '🌙';
-    button.setAttribute('aria-label', theme === 'dark' ? 'Change to light theme' : 'Change to dark theme');
 }
 
 // Theme toggle event listener
@@ -106,9 +110,7 @@ function registerUser() {
     
     auth.createUserWithEmailAndPassword(email, password)
         .then(userCredential => {
-            return userCredential.user.updateProfile({
-                displayName: name
-            });
+            return userCredential.user.updateProfile({ displayName: name });
         })
         .then(() => {
             closeAuthModal();
@@ -136,114 +138,177 @@ function loginUser() {
 
 // Logout user
 function logoutUser() {
-    auth.signOut()
-        .then(() => {
-            alert('Logged out successfully!');
+    auth.signOut().then(() => {
+        alert('Logged out successfully!');
+    });
+}
+
+// ==================== TMDB API FUNCTIONS ====================
+
+// Fetch popular movies from TMDB
+async function fetchPopularMovies() {
+    try {
+        const response = await fetch(
+            `${TMDB_API_BASE}/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
+        );
+        const data = await response.json();
+        return data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            year: new Date(movie.release_date).getFullYear(),
+            poster: movie.poster_path || '',
+            rating: movie.vote_average.toFixed(1),
+            genre_ids: movie.genre_ids || []
+        }));
+    } catch (error) {
+        console.error('Error fetching movies:', error);
+        return [];
+    }
+}
+
+// Fetch popular TV shows from TMDB
+async function fetchPopularTVShows() {
+    try {
+        const response = await fetch(
+            `${TMDB_API_BASE}/tv/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
+        );
+        const data = await response.json();
+        return data.results.map(show => ({
+            id: show.id,
+            title: show.name,
+            year: new Date(show.first_air_date).getFullYear(),
+            poster: show.poster_path || '',
+            rating: show.vote_average.toFixed(1),
+            genre_ids: show.genre_ids || [],
+            seasons: show.number_of_seasons || 1
+        }));
+    } catch (error) {
+        console.error('Error fetching TV shows:', error);
+        return [];
+    }
+}
+
+// Search movies on TMDB
+async function searchMovies(query) {
+    try {
+        const response = await fetch(
+            `${TMDB_API_BASE}/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
+        );
+        const data = await response.json();
+        return data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            year: new Date(movie.release_date).getFullYear(),
+            poster: movie.poster_path || '',
+            rating: movie.vote_average.toFixed(1),
+            genre_ids: movie.genre_ids || []
+        }));
+    } catch (error) {
+        console.error('Search error:', error);
+        return [];
+    }
+}
+
+// ==================== FIRESTORE STORAGE FUNCTIONS ====================
+
+// Save movie to Firestore
+async function saveMovieToFirebase(movie) {
+    try {
+        await db.collection('movies').doc(movie.id.toString()).set({
+            ...movie,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-}
-
-// ==================== DATA MANAGEMENT ====================
-// Sample data with genre IDs
-const popularMovies = [
-    { 
-        id: 533535, title: 'Deadpool & Wolverine', year: 2024, 
-        poster: '/8cdWjvZQUExUUTzyp4pr6VeVsmZ.jpg', 
-        genre_ids: [28, 35, 878], rating: 8.5 
-    },
-    { 
-        id: 912649, title: 'Venom: The Last Dance', year: 2024, 
-        poster: '/aosm8NMQ3UwkBVqPpwfZ7PWOaA8.jpg', 
-        genre_ids: [28, 878, 27], rating: 7.2 
-    },
-    { 
-        id: 1022789, title: 'Terrifier 3', year: 2024, 
-        poster: '/l1175ygxl3G6MOtRXXznQ3vxu3A.jpg', 
-        genre_ids: [27], rating: 7.8 
-    },
-    { 
-        id: 1184918, title: 'The Legacy of Strangler', year: 2024, 
-        poster: '/ekZ1isBgusoGTbG4pY6eyj7e9q2.jpg', 
-        genre_ids: [28, 53], rating: 6.5 
-    },
-    { 
-        id: 1087822, title: 'In a Violent Nature', year: 2024, 
-        poster: '/qtXNcjUeTdbaQoulbGfv2bBETX8.jpg', 
-        genre_ids: [27, 53], rating: 6.8 
-    },
-    { 
-        id: 1010605, title: 'The Killer', year: 2024, 
-        poster: '/bxAFILl1kJegrwZ9n2UYoviUJfJ.jpg', 
-        genre_ids: [28, 53, 80], rating: 7.5 
+        console.log('✅ Movie saved:', movie.title);
+    } catch (error) {
+        console.error('Error saving movie:', error);
     }
-];
+}
 
-const popularTVShows = [
-    { 
-        id: 119051, title: 'Fallout', year: 2024, 
-        poster: '/oX6I3YyJMxZltZB8PSk3ml1gLh.jpg', 
-        genre_ids: [10765, 10759], rating: 8.7, seasons: 1 
-    },
-    { 
-        id: 60735, title: 'The Flash', year: 2014, 
-        poster: '/lUFK7ElGCk9kVEryDJHICeNdmd1.jpg', 
-        genre_ids: [28, 12, 878], rating: 7.8, seasons: 9 
-    },
-    { 
-        id: 82856, title: 'The Mandalorian', year: 2019, 
-        poster: '/eU1i6eHXlzMOlCf0m7rcASv5kt9.jpg', 
-        genre_ids: [10765, 10759, 37], rating: 8.5, seasons: 3 
-    },
-    { 
-        id: 1399, title: 'Game of Thrones', year: 2011, 
-        poster: '/u3bZgnGQ9j01xWP2MYowaBSKsw8.jpg', 
-        genre_ids: [10765, 18, 10759], rating: 9.2, seasons: 8 
-    },
-    { 
-        id: 66732, title: 'Stranger Things', year: 2016, 
-        poster: '/laCJxobHoPVaLQTKxcBW2M8DcPA.jpg', 
-        genre_ids: [18, 9648, 10765], rating: 8.7, seasons: 5 
+// Save TV show to Firestore
+async function saveTVShowToFirebase(show) {
+    try {
+        await db.collection('tvShows').doc(show.id.toString()).set({
+            ...show,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('✅ TV Show saved:', show.title);
+    } catch (error) {
+        console.error('Error saving TV show:', error);
     }
-];
-
-// Active filters
-let activeFilters = {
-    year: '',
-    rating: '',
-    genres: [],
-    search: ''
-};
-
-// ==================== INITIALIZATION ====================
-document.addEventListener('DOMContentLoaded', function() {
-    initTheme();
-    loadMovies();
-    loadTVShows();
-    loadGenreFilters();
-    setupProgressTracking();
-    setupStarRating();
-});
-
-// Load movies
-function loadMovies(filteredData = null) {
-    const movieGrid = document.getElementById('movieGrid');
-    const data = filteredData || popularMovies;
-    movieGrid.innerHTML = '';
-    
-    data.forEach(movie => {
-        movieGrid.appendChild(createMediaCard(movie, 'movie'));
-    });
 }
 
-// Load TV shows
-function loadTVShows(filteredData = null) {
-    const tvGrid = document.getElementById('tvGrid');
-    const data = filteredData || popularTVShows;
-    tvGrid.innerHTML = '';
-    
-    data.forEach(show => {
-        tvGrid.appendChild(createMediaCard(show, 'tv'));
-    });
+// Get movies from Firestore
+async function getMoviesFromFirebase() {
+    try {
+        const snapshot = await db.collection('movies').get();
+        return snapshot.docs.map(doc => doc.data());
+    } catch (error) {
+        console.error('Error fetching movies from Firebase:', error);
+        return [];
+    }
 }
+
+// Get TV shows from Firestore
+async function getTVShowsFromFirebase() {
+    try {
+        const snapshot = await db.collection('tvShows').get();
+        return snapshot.docs.map(doc => doc.data());
+    } catch (error) {
+        console.error('Error fetching TV shows from Firebase:', error);
+        return [];
+    }
+}
+
+// Fetch from TMDB and save to Firebase (one-time setup)
+async function fetchAndSaveAllContent() {
+    console.log('🎬 Fetching movies from TMDB...');
+    const movies = await fetchPopularMovies();
+    for (const movie of movies) {
+        await saveMovieToFirebase(movie);
+    }
+    
+    console.log('📺 Fetching TV shows from TMDB...');
+    const tvShows = await fetchPopularTVShows();
+    for (const show of tvShows) {
+        await saveTVShowToFirebase(show);
+    }
+    
+    console.log('✨ All content saved to Firebase!');
+    return { movies, tvShows };
+}
+
+// Load from Firebase or fallback to TMDB
+async function loadMoviesFromFirebaseOrAPI() {
+    let movies = await getMoviesFromFirebase();
+    
+    if (movies.length === 0) {
+        console.log('📂 No movies in Firebase, fetching from TMDB...');
+        movies = await fetchPopularMovies();
+        // Optionally save them now
+        for (const movie of movies) {
+            await saveMovieToFirebase(movie);
+        }
+    }
+    
+    loadMovies(movies);
+}
+
+async function loadTVShowsFromFirebaseOrAPI() {
+    let tvShows = await getTVShowsFromFirebase();
+    
+    if (tvShows.length === 0) {
+        console.log('📂 No TV shows in Firebase, fetching from TMDB...');
+        tvShows = await fetchPopularTVShows();
+        // Optionally save them now
+        for (const show of tvShows) {
+            await saveTVShowToFirebase(show);
+        }
+    }
+    
+    loadTVShows(tvShows);
+}
+
+// ==================== UI FUNCTIONS ====================
 
 // Load genre filters
 function loadGenreFilters() {
@@ -274,21 +339,26 @@ function toggleGenre(genreId) {
     }
 }
 
-// Create media card
+// Create media card (with fixed placeholder)
 function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = type === 'movie' ? 'movie-card' : 'tv-card';
     
+    // ✅ Data URI placeholder - works offline, never breaks
     const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFBvc3RlcjwvdGV4dD48L3N2Zz4=';
+    
+    const genres = item.genre_ids ? 
+        item.genre_ids.map(id => GENRES[id]).filter(g => g).join(', ') : 
+        '';
     
     card.innerHTML = `
         <img src="${TMDB_IMAGE_BASE}${item.poster}" alt="${item.title}" 
-             onerror="this.src='https://dummyimage.com/300x450/333/fff&text=No+Poster'">
+             onerror="this.src='${placeholder}'">
         <div class="${type}-info">
             <h3>${item.title}</h3>
-            <p>${item.year} • ${type === 'tv' ? item.seasons + ' Seasons' : 'Movie'}</p>
+            <p>${item.year} • ${type === 'tv' ? (item.seasons || 1) + ' Seasons' : 'Movie'}</p>
             <p>⭐ ${item.rating}</p>
-            <p class="genres">${item.genre_ids.map(id => GENRES[id]).filter(g => g).join(', ')}</p>
+            ${genres ? `<p class="genres">${genres}</p>` : ''}
         </div>
     `;
     
@@ -297,14 +367,36 @@ function createMediaCard(item, type) {
     return card;
 }
 
+// Load movies
+function loadMovies(filteredData = null) {
+    const movieGrid = document.getElementById('movieGrid');
+    const data = filteredData || [];
+    movieGrid.innerHTML = '';
+    
+    data.forEach(movie => {
+        movieGrid.appendChild(createMediaCard(movie, 'movie'));
+    });
+}
+
+// Load TV shows
+function loadTVShows(filteredData = null) {
+    const tvGrid = document.getElementById('tvGrid');
+    const data = filteredData || [];
+    tvGrid.innerHTML = '';
+    
+    data.forEach(show => {
+        tvGrid.appendChild(createMediaCard(show, 'tv'));
+    });
+}
+
 // ==================== PLAYER FUNCTIONS ====================
+
 // Play movie
 function playMovie(tmdbId, movieData = null) {
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
     const episodeSelector = document.getElementById('episodeSelector');
     
-    // Hide episode selector for movies
     episodeSelector.style.display = 'none';
     
     // Check for saved progress
@@ -319,7 +411,6 @@ function playMovie(tmdbId, movieData = null) {
         }
     }
     
-    // Build player URL
     const params = new URLSearchParams({
         color: PLAYER_COLOR,
         autoPlay: 'true',
@@ -341,8 +432,8 @@ function playMovie(tmdbId, movieData = null) {
     
     modal.style.display = 'block';
     
-    // Load ratings and reviews
     if (movieData) {
+        modal.dataset.contentKey = `movie_${tmdbId}__`;
         loadRatingsAndReviews(tmdbId, 'movie', movieData.title);
     }
 }
@@ -353,11 +444,9 @@ function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
     const container = document.getElementById('playerContainer');
     const episodeSelector = document.getElementById('episodeSelector');
     
-    // Show episode selector for TV shows
     episodeSelector.style.display = 'block';
     loadEpisodes(tmdbId, season, showData);
     
-    // Build player URL
     const params = new URLSearchParams({
         color: PLAYER_COLOR,
         autoPlay: 'true',
@@ -380,8 +469,8 @@ function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
     
     modal.style.display = 'block';
     
-    // Load ratings and reviews
     if (showData) {
+        modal.dataset.contentKey = `tv_${tmdbId}_${season}_${episode}`;
         loadRatingsAndReviews(tmdbId, 'tv', showData.title, season, episode);
     }
 }
@@ -389,9 +478,7 @@ function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
 // Load episodes for TV show
 function loadEpisodes(tmdbId, season, showData = null) {
     const episodeList = document.getElementById('episodeList');
-    const show = showData || popularTVShows.find(s => s.id === tmdbId);
-    
-    if (!show) return;
+    const show = showData || { seasons: 1 };
     
     episodeList.innerHTML = '';
     
@@ -420,11 +507,19 @@ function closePlayer() {
 }
 
 // ==================== SEARCH & FILTERS ====================
+
 // Search content
-function searchContent() {
+async function searchContent() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     activeFilters.search = searchTerm;
-    applyFilters();
+    
+    if (searchTerm.length > 2) {
+        // Real-time search from TMDB
+        const searchResults = await searchMovies(searchTerm);
+        loadMovies(searchResults);
+    } else {
+        applyFilters();
+    }
 }
 
 // Apply filters
@@ -435,11 +530,13 @@ function applyFilters() {
     activeFilters.year = yearFilter;
     activeFilters.rating = ratingFilter;
     
-    let filteredMovies = filterData(popularMovies);
-    let filteredTV = filterData(popularTVShows);
-    
-    loadMovies(filteredMovies);
-    loadTVShows(filteredTV);
+    // Load fresh data and filter
+    Promise.all([getMoviesFromFirebase(), getTVShowsFromFirebase()]).then(([movies, tvShows]) => {
+        const filteredMovies = filterData(movies);
+        const filteredTV = filterData(tvShows);
+        loadMovies(filteredMovies);
+        loadTVShows(filteredTV);
+    });
 }
 
 // Filter data based on active filters
@@ -462,7 +559,7 @@ function filterData(data) {
         }
         
         // Rating filter
-        if (activeFilters.rating && item.rating < parseInt(activeFilters.rating)) {
+        if (activeFilters.rating && parseFloat(item.rating) < parseInt(activeFilters.rating)) {
             return false;
         }
         
@@ -495,11 +592,12 @@ function resetFilters() {
         chip.classList.remove('active');
     });
     
-    loadMovies();
-    loadTVShows();
+    loadMoviesFromFirebaseOrAPI();
+    loadTVShowsFromFirebaseOrAPI();
 }
 
 // ==================== CONTINUE WATCHING ====================
+
 // Load continue watching items
 function loadContinueWatching() {
     const user = auth.currentUser;
@@ -508,7 +606,6 @@ function loadContinueWatching() {
     const continueGrid = document.getElementById('continueGrid');
     const continueSection = document.getElementById('continue-watching');
     
-    // Get progress from localStorage
     const progressKeys = Object.keys(localStorage).filter(key => 
         key.startsWith(`progress_${user.uid}_`)
     );
@@ -525,26 +622,24 @@ function loadContinueWatching() {
         const progress = JSON.parse(localStorage.getItem(key));
         const [, , tmdbId, type] = key.split('_');
         
-        // Find the movie/show data
         const item = type === 'movie' 
-            ? popularMovies.find(m => m.id == tmdbId)
-            : popularTVShows.find(s => s.id == tmdbId);
+            ? { id: tmdbId, title: progress.title || 'Movie', poster: '', rating: 0, genre_ids: [] }
+            : { id: tmdbId, title: progress.title || 'TV Show', poster: '', rating: 0, genre_ids: [], seasons: 1 };
         
-        if (item) {
-            const card = createMediaCard(item, type);
-            card.onclick = () => {
-                if (type === 'movie') {
-                    playMovie(item.id, item);
-                } else {
-                    playTVShow(item.id, 1, 1, item);
-                }
-            };
-            continueGrid.appendChild(card);
-        }
+        const card = createMediaCard(item, type);
+        card.onclick = () => {
+            if (type === 'movie') {
+                playMovie(item.id, item);
+            } else {
+                playTVShow(item.id, 1, 1, item);
+            }
+        };
+        continueGrid.appendChild(card);
     });
 }
 
 // ==================== RATINGS & REVIEWS ====================
+
 // Load ratings and reviews
 function loadRatingsAndReviews(tmdbId, type, title, season = null, episode = null) {
     const user = auth.currentUser;
@@ -592,25 +687,13 @@ function setupStarRating() {
             highlightStars(rating);
         });
     });
-    
-    document.getElementById('userRating').addEventListener('mouseleave', () => {
-        // Reset to saved rating
-        const user = auth.currentUser;
-        if (user) {
-            // Load saved rating again
-        }
-    });
 }
 
 // Highlight stars
 function highlightStars(rating) {
     const stars = document.querySelectorAll('#userRating span');
     stars.forEach((star, index) => {
-        if (index < rating) {
-            star.style.filter = 'brightness(1.5)';
-        } else {
-            star.style.filter = 'none';
-        }
+        star.style.filter = index < rating ? 'brightness(1.5)' : 'none';
     });
 }
 
@@ -655,7 +738,6 @@ function submitUserRating(rating) {
     }).then(() => {
         alert('Rating submitted!');
         highlightStars(rating);
-        loadRatingsAndReviews(...contentKey.split('_'));
     });
 }
 
@@ -714,6 +796,7 @@ function loadReviews(contentKey) {
 }
 
 // ==================== PROGRESS TRACKING ====================
+
 // Setup progress tracking from player
 function setupProgressTracking() {
     window.addEventListener('message', function(event) {
@@ -742,7 +825,7 @@ function handlePlayerEvent(eventData) {
     const modal = document.getElementById('playerModal');
     modal.dataset.contentKey = contentKey;
     
-    // Save progress to localStorage
+    // Save progress
     const progressKey = `progress_${user.uid}_${id}_${mediaType}_${season || ''}_${episode || ''}`;
     
     if (['timeupdate', 'pause', 'ended'].includes(event)) {
@@ -752,13 +835,11 @@ function handlePlayerEvent(eventData) {
             progress,
             timestamp: Date.now(),
             title: mediaType === 'movie' ? 
-                (popularMovies.find(m => m.id == id)?.title || '') :
-                (popularTVShows.find(s => s.id == id)?.title || '')
+                (document.querySelector('#movieGrid .movie-card h3')?.textContent || 'Movie') :
+                (document.querySelector('#tvGrid .tv-card h3')?.textContent || 'TV Show')
         };
         
         localStorage.setItem(progressKey, JSON.stringify(progressData));
-        
-        // Update continue watching
         loadContinueWatching();
     }
     
@@ -782,12 +863,33 @@ function handlePlayerEvent(eventData) {
     }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
+// ==================== INITIALIZATION ====================
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    initTheme();
+    
+    // Load content from Firebase or TMDB
+    await loadMoviesFromFirebaseOrAPI();
+    await loadTVShowsFromFirebaseOrAPI();
+    
+    loadGenreFilters();
+    setupProgressTracking();
+    setupStarRating();
+});
+
+// ==================== UTILITY & EVENTS ====================
+
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('playerModal');
-    if (event.target === modal) {
+    const playerModal = document.getElementById('playerModal');
+    const authModal = document.getElementById('authModal');
+    
+    if (event.target === playerModal) {
         closePlayer();
+    }
+    if (event.target === authModal) {
+        closeAuthModal();
     }
 }
 
@@ -799,9 +901,9 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Scroll to sections
+// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
+    anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
