@@ -7,12 +7,12 @@ const TMDB_API_KEY = '7901627e4352f597cecc198c6f0b33e1'; // Replace with your TM
 
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_FIREBASE_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_FIREBASE_PROJECT_ID",
-    storageBucket: "YOUR_FIREBASE_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyADR6f5fyv2hAAhDoF7wrie2wF6q0UNBOY",
+    authDomain: "movie-ac414.firebaseapp.com",
+    projectId: "movie-ac414",
+    storageBucket: "movie-ac414.firebasestorage.app",
+    messagingSenderId: "415859175148",
+    appId: "1:415859175148:web:9233c5319a43886b8bffc9"
 };
 
 // Initialize Firebase
