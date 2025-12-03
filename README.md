@@ -256,4 +256,3 @@ GitHub Issues: Report Bug/Request Feature
 <div align="center">
   <sub>Built with ❤️ for movie enthusiasts</sub>
 </div>
-```
