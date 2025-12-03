@@ -20,14 +20,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Genre Mapping
-const GENRES = {
-    28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
-    99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
-    27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
-    10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
-};
-
 // Navigation state
 let currentSection = 'movies';
 let previousSection = 'movies';
@@ -157,13 +149,6 @@ function showSection(sectionName, clickedLink) {
     
     // Show selected section
     document.getElementById(sectionName).style.display = 'block';
-    
-    // Special handling for sections
-    if (sectionName === 'search') {
-        document.getElementById('filtersSection').style.display = 'none';
-    } else if (sectionName !== 'searchResults') {
-        document.getElementById('filtersSection').style.display = 'block';
-    }
     
     // Close mobile menu if open
     document.querySelector('.nav').classList.remove('active');
@@ -352,33 +337,6 @@ async function loadTVShowsFromFirebaseOrAPI() {
 }
 
 // ==================== UI FUNCTIONS ====================
-function loadGenreFilters() {
-    const container = document.getElementById('genreChips');
-    container.innerHTML = '';
-    
-    Object.entries(GENRES).forEach(([id, name]) => {
-        const chip = document.createElement('span');
-        chip.className = 'genre-chip';
-        chip.textContent = name;
-        chip.dataset.genreId = id;
-        chip.onclick = () => toggleGenre(id);
-        container.appendChild(chip);
-    });
-}
-
-function toggleGenre(genreId) {
-    const chip = document.querySelector(`[data-genre-id="${genreId}"]`);
-    const index = activeFilters.genres.indexOf(genreId);
-    
-    if (index > -1) {
-        activeFilters.genres.splice(index, 1);
-        chip.classList.remove('active');
-    } else {
-        activeFilters.genres.push(genreId);
-        chip.classList.add('active');
-    }
-}
-
 function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = type === 'movie' ? 'movie-card' : 'tv-card';
@@ -607,78 +565,6 @@ function clearAdvancedSearch() {
     document.getElementById('advancedRatingFilter').value = '';
     document.getElementById('advancedGenreFilter').value = '';
     document.getElementById('advancedSearchGrid').innerHTML = '';
-}
-
-// ==================== FILTERS & RESET ====================
-function applyFilters() {
-    const yearFilter = document.getElementById('yearFilter').value;
-    const ratingFilter = document.getElementById('ratingFilter').value;
-    
-    // Hide search results when applying filters
-    if (document.getElementById('searchResults').style.display === 'block') {
-        document.getElementById('searchResults').style.display = 'none';
-        document.getElementById('movies').style.display = 'block';
-        document.getElementById('tv').style.display = 'block';
-    }
-    
-    Promise.all([getMoviesFromFirebase(), getTVShowsFromFirebase()]).then(([movies, tvShows]) => {
-        const filteredMovies = filterData(movies);
-        const filteredTV = filterData(tvShows);
-        loadMovies(filteredMovies);
-        loadTVShows(filteredTV);
-    });
-}
-
-function filterData(data) {
-    return data.filter(item => {
-        if (activeFilters.search && !item.title.toLowerCase().includes(activeFilters.search)) {
-            return false;
-        }
-        
-        if (activeFilters.year) {
-            if (activeFilters.year === '2020s' && (item.year < 2020 || item.year > 2029)) {
-                return false;
-            } else if (activeFilters.year === '2010s' && (item.year < 2010 || item.year > 2019)) {
-                return false;
-            } else if (item.year != activeFilters.year) {
-                return false;
-            }
-        }
-        
-        if (activeFilters.rating && parseFloat(item.rating) < parseInt(activeFilters.rating)) {
-            return false;
-        }
-        
-        if (activeFilters.genres.length > 0) {
-            const hasMatchingGenre = activeFilters.genres.some(genreId => 
-                item.genre_ids.includes(parseInt(genreId))
-            );
-            if (!hasMatchingGenre) return false;
-        }
-        
-        return true;
-    });
-}
-
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('yearFilter').value = '';
-    document.getElementById('ratingFilter').value = '';
-    
-    activeFilters = {
-        year: '',
-        rating: '',
-        genres: [],
-        search: ''
-    };
-    
-    document.querySelectorAll('.genre-chip').forEach(chip => {
-        chip.classList.remove('active');
-    });
-    
-    clearSearch();
-    loadMoviesFromFirebaseOrAPI();
-    loadTVShowsFromFirebaseOrAPI();
 }
 
 // ==================== PLAYER FUNCTIONS ====================
@@ -1059,12 +945,9 @@ function handleSwipe() {
 
 // Add Enter key support for search
 document.addEventListener('DOMContentLoaded', async function() {
-    initTheme();
-    
     await loadMoviesFromFirebaseOrAPI();
     await loadTVShowsFromFirebaseOrAPI();
     
-    loadGenreFilters();
     setupProgressTracking();
     setupStarRating();
     
