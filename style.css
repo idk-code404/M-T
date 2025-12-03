@@ -5,6 +5,8 @@
     --mobile-nav-height: 60px;
     --mobile-grid-gap: 10px;
     --mobile-card-height: 200px;
+    --error-color: #dc3545;
+    --success-color: #28a745;
 }
 
 /* Dark Mode (Default) */
@@ -56,7 +58,21 @@ body {
     padding: 0 20px;
 }
 
-/* ===== Header Mobile Optimization ===== */
+/* Error Display */
+#errorDisplay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--error-color);
+    color: white;
+    padding: 10px;
+    z-index: 9999;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* ===== Header & Navigation ===== */
 .header {
     background: var(--color-card-bg);
     padding: 10px 0;
@@ -138,7 +154,7 @@ body {
     border-bottom: 2px solid var(--color-primary);
 }
 
-/* Header Controls Mobile */
+/* Header Controls */
 .header-controls {
     display: flex;
     align-items: center;
@@ -178,7 +194,7 @@ body {
     background: #ff0a16;
 }
 
-/* Theme Toggle Mobile */
+/* Theme Toggle */
 #themeToggle {
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
@@ -194,7 +210,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Auth Button Mobile */
+/* Auth Button */
 #authBtn, #userProfile button {
     padding: 6px 12px;
     background: var(--color-primary);
@@ -206,13 +222,19 @@ body {
     transition: background 0.3s;
 }
 
+#userProfile {
+    display: none;
+    align-items: center;
+    gap: 10px;
+}
+
 #userName {
     color: var(--color-fg);
     margin-right: 5px;
     font-size: 12px;
 }
 
-/* ===== Hero Section Mobile ===== */
+/* ===== Hero Section ===== */
 .hero {
     margin-top: var(--mobile-nav-height);
     padding: 40px 0;
@@ -220,10 +242,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.hero .container {
     text-align: center;
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                url('https://image.tmdb.org/t/p/original/8Y43POKjjKDGI9MH89NW0NAzzp8.jpg');
+    background-size: cover;
+    background-position: center;
 }
 
 .hero h2 {
@@ -237,7 +260,49 @@ body {
     color: var(--color-primary);
 }
 
-/* ===== Search Section Mobile ===== */
+/* ===== Search Sections ===== */
+/* Search Results Section */
+#searchResults {
+    padding: 20px 0;
+}
+
+#searchTitle {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: var(--color-primary);
+}
+
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.search-grid h3 {
+    grid-column: 1/-1;
+    color: var(--color-primary);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.clear-search-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+    width: 100%;
+}
+
+.clear-search-btn:hover {
+    background: #ff0a16;
+}
+
+/* Advanced Search Section */
 #search .container > h2 {
     margin-bottom: 20px;
     text-align: center;
@@ -245,10 +310,10 @@ body {
 
 .advanced-search-controls {
     background: var(--color-card-bg);
-    padding: 20px 15px;
+    padding: 25px;
     border-radius: 8px;
     border: 1px solid var(--color-border);
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .search-row {
@@ -265,12 +330,12 @@ body {
 .search-row input,
 .search-row select {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     background: var(--color-bg);
     color: var(--color-fg);
     border: 1px solid var(--color-border);
     border-radius: 4px;
-    font-size: 16px; /* Prevents iOS zoom */
+    font-size: 16px;
 }
 
 .advanced-search-btn,
@@ -301,24 +366,18 @@ body {
     background: var(--color-border);
 }
 
-.clear-search-btn {
-    margin-top: 15px;
-    padding: 10px 20px;
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-    width: 100%;
+#advancedSearchGrid {
+    min-height: 300px;
 }
 
-.clear-search-btn:hover {
-    background: #ff0a16;
+#advancedSearchGrid.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--color-text-muted);
 }
 
-/* ===== Grid Layout Mobile ===== */
+/* ===== Content Sections ===== */
 .content-section {
     padding: 30px 0;
 }
@@ -329,19 +388,13 @@ body {
     color: var(--color-primary);
 }
 
-.movie-grid, .tv-grid, .search-grid {
+.movie-grid, .tv-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: var(--mobile-grid-gap);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
 }
 
-/* Small screens - 2 columns */
-@media (max-width: 480px) {
-    .movie-grid, .tv-grid, .search-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
+/* ===== Movie/TV Cards ===== */
 .movie-card, .tv-card {
     background: var(--color-card-bg);
     border-radius: 6px;
@@ -390,7 +443,7 @@ body {
     line-height: 1.2;
 }
 
-/* ===== Modal Mobile ===== */
+/* ===== Modal ===== */
 .modal {
     display: none;
     position: fixed;
@@ -436,7 +489,7 @@ body {
     border-radius: 4px;
 }
 
-/* Episode Selector Mobile */
+/* Episode Selector */
 .episode-selector {
     margin-top: 15px;
     padding: 15px;
@@ -479,7 +532,7 @@ body {
     color: #fff;
 }
 
-/* Rating Section Mobile */
+/* Rating Section */
 .rating-section {
     margin-top: 15px;
     padding: 15px;
@@ -555,7 +608,7 @@ body {
     color: var(--color-text-muted);
 }
 
-/* Progress Display Mobile */
+/* Progress Display */
 .progress-display {
     position: fixed;
     bottom: 10px;
@@ -572,13 +625,7 @@ body {
     font-size: 12px;
 }
 
-/* Continue Watching Mobile */
-#continue-watching h2 {
-    font-size: 18px;
-    margin-bottom: 15px;
-}
-
-/* Auth Modal Mobile */
+/* Auth Modal */
 .auth-modal-content {
     background: var(--color-card-bg);
     padding: 20px;
@@ -641,7 +688,55 @@ body {
     background: #ff0a16;
 }
 
-/* ===== Desktop Styles (min-width: 769px) ===== */
+/* ===== Mobile Responsive Styles ===== */
+@media (max-width: 768px) {
+    .search-row {
+        flex-direction: column;
+    }
+    
+    .advanced-search-btn,
+    .clear-advanced-btn {
+        width: 100%;
+    }
+    
+    .menu-toggle {
+        display: block;
+    }
+    
+    .hero h2 {
+        font-size: 20px;
+    }
+    
+    .movie-grid, .tv-grid, .search-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .modal-content {
+        padding: 10px;
+    }
+    
+    #playerContainer iframe {
+        min-height: 250px;
+    }
+    
+    .search-box input {
+        width: 100px;
+        font-size: 14px;
+    }
+    
+    .logo {
+        font-size: 18px;
+    }
+}
+
+/* Small Mobile (under 480px) */
+@media (max-width: 480px) {
+    .movie-grid, .tv-grid, .search-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop (min-width: 769px) */
 @media (min-width: 769px) {
     .menu-toggle {
         display: none !important;
@@ -689,7 +784,7 @@ body {
     }
     
     #playerContainer iframe {
-        height: 600px;
+        min-height: 400px;
     }
     
     .search-row {
@@ -699,20 +794,16 @@ body {
     .advanced-search-btn, .clear-advanced-btn {
         width: auto;
     }
-    
-    .clear-search-btn {
-        width: auto;
-    }
 }
 
-/* ===== Tablet Styles (768px - 1024px) ===== */
+/* Tablet (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
     .movie-grid, .tv-grid, .search-grid {
         grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     }
 }
 
-/* Prevent zoom on input focus */
+/* Prevent zoom on input focus for iOS */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     select, textarea, input[type="text"], input[type="email"], input[type="password"] {
         font-size: 16px;
