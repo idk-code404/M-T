@@ -279,9 +279,11 @@ function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = type === 'movie' ? 'movie-card' : 'tv-card';
     
+    const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFBvc3RlcjwvdGV4dD48L3N2Zz4=';
+    
     card.innerHTML = `
         <img src="${TMDB_IMAGE_BASE}${item.poster}" alt="${item.title}" 
-             onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+             onerror="this.src='${placeholder}'">
         <div class="${type}-info">
             <h3>${item.title}</h3>
             <p>${item.year} • ${type === 'tv' ? item.seasons + ' Seasons' : 'Movie'}</p>
