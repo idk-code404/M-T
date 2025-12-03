@@ -37,7 +37,7 @@ let activeFilters = {
 };
 
 // ==================== THEME MANAGEMENT ====================
-// Initialize theme system
+
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const currentTheme = savedTheme || 'dark';
@@ -45,13 +45,11 @@ function initTheme() {
     updateThemeButton(currentTheme);
 }
 
-// Update theme toggle button
 function updateThemeButton(theme) {
     const button = document.getElementById('themeToggle');
     button.innerHTML = theme === 'dark' ? '☀️' : '🌙';
 }
 
-// Theme toggle event listener
 document.getElementById('themeToggle').addEventListener('click', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -62,7 +60,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 // ==================== AUTHENTICATION ====================
-// Monitor auth state
+
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('authBtn').style.display = 'none';
@@ -77,17 +75,14 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// Open auth modal
 function openAuthModal() {
     document.getElementById('authModal').style.display = 'block';
 }
 
-// Close auth modal
 function closeAuthModal() {
     document.getElementById('authModal').style.display = 'none';
 }
 
-// Switch between login/register tabs
 function switchTab(tab) {
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(t => t.classList.remove('active'));
@@ -102,7 +97,6 @@ function switchTab(tab) {
     }
 }
 
-// Register user
 function registerUser() {
     const name = document.getElementById('registerName').value;
     const email = document.getElementById('registerEmail').value;
@@ -121,7 +115,6 @@ function registerUser() {
         });
 }
 
-// Login user
 function loginUser() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
@@ -136,7 +129,6 @@ function loginUser() {
         });
 }
 
-// Logout user
 function logoutUser() {
     auth.signOut().then(() => {
         alert('Logged out successfully!');
@@ -145,7 +137,6 @@ function logoutUser() {
 
 // ==================== TMDB API FUNCTIONS ====================
 
-// Fetch popular movies from TMDB
 async function fetchPopularMovies() {
     try {
         const response = await fetch(
@@ -166,7 +157,6 @@ async function fetchPopularMovies() {
     }
 }
 
-// Fetch popular TV shows from TMDB
 async function fetchPopularTVShows() {
     try {
         const response = await fetch(
@@ -188,7 +178,6 @@ async function fetchPopularTVShows() {
     }
 }
 
-// Search movies on TMDB
 async function searchMovies(query) {
     try {
         const response = await fetch(
@@ -209,9 +198,29 @@ async function searchMovies(query) {
     }
 }
 
-// ==================== FIRESTORE STORAGE FUNCTIONS ====================
+async function searchTVShows(query) {
+    try {
+        const response = await fetch(
+            `${TMDB_API_BASE}/search/tv?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
+        );
+        const data = await response.json();
+        return data.results.map(show => ({
+            id: show.id,
+            title: show.name,
+            year: new Date(show.first_air_date).getFullYear(),
+            poster: show.poster_path || '',
+            rating: show.vote_average.toFixed(1),
+            genre_ids: show.genre_ids || [],
+            seasons: show.number_of_seasons || 1
+        }));
+    } catch (error) {
+        console.error('TV search error:', error);
+        return [];
+    }
+}
 
-// Save movie to Firestore
+// ==================== FIRESTORE FUNCTIONS ====================
+
 async function saveMovieToFirebase(movie) {
     try {
         await db.collection('movies').doc(movie.id.toString()).set({
@@ -224,7 +233,6 @@ async function saveMovieToFirebase(movie) {
     }
 }
 
-// Save TV show to Firestore
 async function saveTVShowToFirebase(show) {
     try {
         await db.collection('tvShows').doc(show.id.toString()).set({
@@ -237,7 +245,6 @@ async function saveTVShowToFirebase(show) {
     }
 }
 
-// Get movies from Firestore
 async function getMoviesFromFirebase() {
     try {
         const snapshot = await db.collection('movies').get();
@@ -248,7 +255,6 @@ async function getMoviesFromFirebase() {
     }
 }
 
-// Get TV shows from Firestore
 async function getTVShowsFromFirebase() {
     try {
         const snapshot = await db.collection('tvShows').get();
@@ -259,7 +265,6 @@ async function getTVShowsFromFirebase() {
     }
 }
 
-// Fetch from TMDB and save to Firebase (one-time setup)
 async function fetchAndSaveAllContent() {
     console.log('🎬 Fetching movies from TMDB...');
     const movies = await fetchPopularMovies();
@@ -277,14 +282,12 @@ async function fetchAndSaveAllContent() {
     return { movies, tvShows };
 }
 
-// Load from Firebase or fallback to TMDB
 async function loadMoviesFromFirebaseOrAPI() {
     let movies = await getMoviesFromFirebase();
     
     if (movies.length === 0) {
         console.log('📂 No movies in Firebase, fetching from TMDB...');
         movies = await fetchPopularMovies();
-        // Optionally save them now
         for (const movie of movies) {
             await saveMovieToFirebase(movie);
         }
@@ -299,7 +302,6 @@ async function loadTVShowsFromFirebaseOrAPI() {
     if (tvShows.length === 0) {
         console.log('📂 No TV shows in Firebase, fetching from TMDB...');
         tvShows = await fetchPopularTVShows();
-        // Optionally save them now
         for (const show of tvShows) {
             await saveTVShowToFirebase(show);
         }
@@ -310,7 +312,6 @@ async function loadTVShowsFromFirebaseOrAPI() {
 
 // ==================== UI FUNCTIONS ====================
 
-// Load genre filters
 function loadGenreFilters() {
     const container = document.getElementById('genreChips');
     container.innerHTML = '';
@@ -325,7 +326,6 @@ function loadGenreFilters() {
     });
 }
 
-// Toggle genre selection
 function toggleGenre(genreId) {
     const chip = document.querySelector(`[data-genre-id="${genreId}"]`);
     const index = activeFilters.genres.indexOf(genreId);
@@ -339,12 +339,10 @@ function toggleGenre(genreId) {
     }
 }
 
-// Create media card (with fixed placeholder)
 function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = type === 'movie' ? 'movie-card' : 'tv-card';
     
-    // ✅ Data URI placeholder - works offline, never breaks
     const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFBvc3RlcjwvdGV4dD48L3N2Zz4=';
     
     const genres = item.genre_ids ? 
@@ -367,7 +365,6 @@ function createMediaCard(item, type) {
     return card;
 }
 
-// Load movies
 function loadMovies(filteredData = null) {
     const movieGrid = document.getElementById('movieGrid');
     const data = filteredData || [];
@@ -378,7 +375,6 @@ function loadMovies(filteredData = null) {
     });
 }
 
-// Load TV shows
 function loadTVShows(filteredData = null) {
     const tvGrid = document.getElementById('tvGrid');
     const data = filteredData || [];
@@ -389,9 +385,153 @@ function loadTVShows(filteredData = null) {
     });
 }
 
+// ==================== SEARCH & CLEAR ====================
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    activeFilters.search = '';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('movies').style.display = 'block';
+    document.getElementById('tv').style.display = 'block';
+    document.getElementById('continue-watching').style.display = auth.currentUser ? 'block' : 'none';
+}
+
+async function searchContent() {
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+    
+    if (!searchTerm) {
+        clearSearch();
+        return;
+    }
+    
+    document.getElementById('searchResults').style.display = 'block';
+    document.getElementById('movies').style.display = 'none';
+    document.getElementById('tv').style.display = 'none';
+    document.getElementById('continue-watching').style.display = 'none';
+    
+    const searchGrid = document.getElementById('searchGrid');
+    searchGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">Searching...</p>';
+    
+    try {
+        const [movieResults, tvResults] = await Promise.all([
+            searchMovies(searchTerm),
+            searchTVShows(searchTerm)
+        ]);
+        
+        searchGrid.innerHTML = '';
+        
+        const resultsCount = movieResults.length + tvResults.length;
+        document.getElementById('searchTitle').textContent = `Search Results (${resultsCount} found)`;
+        
+        if (movieResults.length > 0) {
+            const moviesHeader = document.createElement('h3');
+            moviesHeader.textContent = `Movies (${movieResults.length})`;
+            moviesHeader.style.gridColumn = '1/-1';
+            moviesHeader.style.color = 'var(--color-primary)';
+            moviesHeader.style.marginTop = '20px';
+            searchGrid.appendChild(moviesHeader);
+            
+            movieResults.forEach(movie => {
+                searchGrid.appendChild(createMediaCard(movie, 'movie'));
+            });
+        }
+        
+        if (tvResults.length > 0) {
+            const tvHeader = document.createElement('h3');
+            tvHeader.textContent = `TV Shows (${tvResults.length})`;
+            tvHeader.style.gridColumn = '1/-1';
+            tvHeader.style.color = 'var(--color-primary)';
+            tvHeader.style.marginTop = '20px';
+            searchGrid.appendChild(tvHeader);
+            
+            tvResults.forEach(show => {
+                searchGrid.appendChild(createMediaCard(show, 'tv'));
+            });
+        }
+        
+        if (resultsCount === 0) {
+            searchGrid.innerHTML = `
+                <p style="text-align: center; grid-column: 1/-1; padding: 40px;">
+                    No results found for "${searchTerm}"
+                </p>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Search error:', error);
+        searchGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Search failed. Try again.</p>';
+    }
+}
+
+function applyFilters() {
+    const yearFilter = document.getElementById('yearFilter').value;
+    const ratingFilter = document.getElementById('ratingFilter').value;
+    
+    activeFilters.year = yearFilter;
+    activeFilters.rating = ratingFilter;
+    
+    Promise.all([getMoviesFromFirebase(), getTVShowsFromFirebase()]).then(([movies, tvShows]) => {
+        const filteredMovies = filterData(movies);
+        const filteredTV = filterData(tvShows);
+        loadMovies(filteredMovies);
+        loadTVShows(filteredTV);
+    });
+}
+
+function filterData(data) {
+    return data.filter(item => {
+        if (activeFilters.search && !item.title.toLowerCase().includes(activeFilters.search)) {
+            return false;
+        }
+        
+        if (activeFilters.year) {
+            if (activeFilters.year === '2020s' && (item.year < 2020 || item.year > 2029)) {
+                return false;
+            } else if (activeFilters.year === '2010s' && (item.year < 2010 || item.year > 2019)) {
+                return false;
+            } else if (item.year != activeFilters.year) {
+                return false;
+            }
+        }
+        
+        if (activeFilters.rating && parseFloat(item.rating) < parseInt(activeFilters.rating)) {
+            return false;
+        }
+        
+        if (activeFilters.genres.length > 0) {
+            const hasMatchingGenre = activeFilters.genres.some(genreId => 
+                item.genre_ids.includes(parseInt(genreId))
+            );
+            if (!hasMatchingGenre) return false;
+        }
+        
+        return true;
+    });
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('yearFilter').value = '';
+    document.getElementById('ratingFilter').value = '';
+    
+    activeFilters = {
+        year: '',
+        rating: '',
+        genres: [],
+        search: ''
+    };
+    
+    document.querySelectorAll('.genre-chip').forEach(chip => {
+        chip.classList.remove('active');
+    });
+    
+    clearSearch();
+    loadMoviesFromFirebaseOrAPI();
+    loadTVShowsFromFirebaseOrAPI();
+}
+
 // ==================== PLAYER FUNCTIONS ====================
 
-// Play movie
 function playMovie(tmdbId, movieData = null) {
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
@@ -399,7 +539,6 @@ function playMovie(tmdbId, movieData = null) {
     
     episodeSelector.style.display = 'none';
     
-    // Check for saved progress
     const user = auth.currentUser;
     let startTime = 0;
     if (user) {
@@ -420,14 +559,7 @@ function playMovie(tmdbId, movieData = null) {
     const playerUrl = `${API_BASE}/movie/${tmdbId}?${params.toString()}`;
     
     container.innerHTML = `
-        <iframe
-            src="${playerUrl}"
-            width="100%"
-            height="600"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay">
-        </iframe>
+        <iframe src="${playerUrl}" width="100%" height="600" frameborder="0" allowfullscreen allow="autoplay"></iframe>
     `;
     
     modal.style.display = 'block';
@@ -438,7 +570,6 @@ function playMovie(tmdbId, movieData = null) {
     }
 }
 
-// Play TV show
 function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
@@ -457,14 +588,7 @@ function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
     const playerUrl = `${API_BASE}/tv/${tmdbId}/${season}/${episode}?${params.toString()}`;
     
     container.innerHTML = `
-        <iframe
-            src="${playerUrl}"
-            width="100%"
-            height="600"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay">
-        </iframe>
+        <iframe src="${playerUrl}" width="100%" height="600" frameborder="0" allowfullscreen allow="autoplay"></iframe>
     `;
     
     modal.style.display = 'block';
@@ -475,11 +599,8 @@ function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
     }
 }
 
-// Load episodes for TV show
 function loadEpisodes(tmdbId, season, showData = null) {
     const episodeList = document.getElementById('episodeList');
-    const show = showData || { seasons: 1 };
-    
     episodeList.innerHTML = '';
     
     const episodesPerSeason = {
@@ -497,7 +618,6 @@ function loadEpisodes(tmdbId, season, showData = null) {
     }
 }
 
-// Close player modal
 function closePlayer() {
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
@@ -506,99 +626,8 @@ function closePlayer() {
     container.innerHTML = '';
 }
 
-// ==================== SEARCH & FILTERS ====================
-
-// Search content
-async function searchContent() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    activeFilters.search = searchTerm;
-    
-    if (searchTerm.length > 2) {
-        // Real-time search from TMDB
-        const searchResults = await searchMovies(searchTerm);
-        loadMovies(searchResults);
-    } else {
-        applyFilters();
-    }
-}
-
-// Apply filters
-function applyFilters() {
-    const yearFilter = document.getElementById('yearFilter').value;
-    const ratingFilter = document.getElementById('ratingFilter').value;
-    
-    activeFilters.year = yearFilter;
-    activeFilters.rating = ratingFilter;
-    
-    // Load fresh data and filter
-    Promise.all([getMoviesFromFirebase(), getTVShowsFromFirebase()]).then(([movies, tvShows]) => {
-        const filteredMovies = filterData(movies);
-        const filteredTV = filterData(tvShows);
-        loadMovies(filteredMovies);
-        loadTVShows(filteredTV);
-    });
-}
-
-// Filter data based on active filters
-function filterData(data) {
-    return data.filter(item => {
-        // Search filter
-        if (activeFilters.search && !item.title.toLowerCase().includes(activeFilters.search)) {
-            return false;
-        }
-        
-        // Year filter
-        if (activeFilters.year) {
-            if (activeFilters.year === '2020s' && (item.year < 2020 || item.year > 2029)) {
-                return false;
-            } else if (activeFilters.year === '2010s' && (item.year < 2010 || item.year > 2019)) {
-                return false;
-            } else if (item.year != activeFilters.year) {
-                return false;
-            }
-        }
-        
-        // Rating filter
-        if (activeFilters.rating && parseFloat(item.rating) < parseInt(activeFilters.rating)) {
-            return false;
-        }
-        
-        // Genre filter
-        if (activeFilters.genres.length > 0) {
-            const hasMatchingGenre = activeFilters.genres.some(genreId => 
-                item.genre_ids.includes(parseInt(genreId))
-            );
-            if (!hasMatchingGenre) return false;
-        }
-        
-        return true;
-    });
-}
-
-// Reset filters
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('yearFilter').value = '';
-    document.getElementById('ratingFilter').value = '';
-    
-    activeFilters = {
-        year: '',
-        rating: '',
-        genres: [],
-        search: ''
-    };
-    
-    document.querySelectorAll('.genre-chip').forEach(chip => {
-        chip.classList.remove('active');
-    });
-    
-    loadMoviesFromFirebaseOrAPI();
-    loadTVShowsFromFirebaseOrAPI();
-}
-
 // ==================== CONTINUE WATCHING ====================
 
-// Load continue watching items
 function loadContinueWatching() {
     const user = auth.currentUser;
     if (!user) return;
@@ -640,12 +669,10 @@ function loadContinueWatching() {
 
 // ==================== RATINGS & REVIEWS ====================
 
-// Load ratings and reviews
 function loadRatingsAndReviews(tmdbId, type, title, season = null, episode = null) {
     const user = auth.currentUser;
     const contentKey = `${type}_${tmdbId}_${season || ''}_${episode || ''}`;
     
-    // Load average rating
     db.collection('ratings').doc(contentKey).get().then(doc => {
         if (doc.exists) {
             const data = doc.data();
@@ -658,7 +685,6 @@ function loadRatingsAndReviews(tmdbId, type, title, season = null, episode = nul
         }
     });
     
-    // Load user rating
     if (user) {
         db.collection('userRatings').doc(user.uid).collection('ratings')
             .doc(contentKey).get().then(doc => {
@@ -669,11 +695,9 @@ function loadRatingsAndReviews(tmdbId, type, title, season = null, episode = nul
             });
     }
     
-    // Load reviews
     loadReviews(contentKey);
 }
 
-// Setup star rating system
 function setupStarRating() {
     const stars = document.querySelectorAll('#userRating span');
     stars.forEach(star => {
@@ -689,7 +713,6 @@ function setupStarRating() {
     });
 }
 
-// Highlight stars
 function highlightStars(rating) {
     const stars = document.querySelectorAll('#userRating span');
     stars.forEach((star, index) => {
@@ -697,7 +720,6 @@ function highlightStars(rating) {
     });
 }
 
-// Submit user rating
 function submitUserRating(rating) {
     const user = auth.currentUser;
     if (!user) {
@@ -710,14 +732,12 @@ function submitUserRating(rating) {
     
     if (!contentKey) return;
     
-    // Update user rating
     db.collection('userRatings').doc(user.uid).collection('ratings')
         .doc(contentKey).set({
             rating: rating,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     
-    // Update global rating
     const ratingsRef = db.collection('ratings').doc(contentKey);
     
     db.runTransaction(transaction => {
@@ -741,7 +761,6 @@ function submitUserRating(rating) {
     });
 }
 
-// Submit review
 function submitRating() {
     const user = auth.currentUser;
     if (!user) {
@@ -771,7 +790,6 @@ function submitRating() {
     });
 }
 
-// Load reviews
 function loadReviews(contentKey) {
     const reviewsList = document.getElementById('reviewsList');
     reviewsList.innerHTML = '<h4>Reviews</h4>';
@@ -797,7 +815,6 @@ function loadReviews(contentKey) {
 
 // ==================== PROGRESS TRACKING ====================
 
-// Setup progress tracking from player
 function setupProgressTracking() {
     window.addEventListener('message', function(event) {
         try {
@@ -814,7 +831,6 @@ function setupProgressTracking() {
     });
 }
 
-// Handle player events
 function handlePlayerEvent(eventData) {
     const user = auth.currentUser;
     if (!user) return;
@@ -825,7 +841,6 @@ function handlePlayerEvent(eventData) {
     const modal = document.getElementById('playerModal');
     modal.dataset.contentKey = contentKey;
     
-    // Save progress
     const progressKey = `progress_${user.uid}_${id}_${mediaType}_${season || ''}_${episode || ''}`;
     
     if (['timeupdate', 'pause', 'ended'].includes(event)) {
@@ -843,7 +858,6 @@ function handlePlayerEvent(eventData) {
         loadContinueWatching();
     }
     
-    // Display progress
     const progressDisplay = document.getElementById('progressDisplay');
     if (event === 'timeupdate' && progress > 0 && progress < 90) {
         const minutes = Math.floor(currentTime / 60);
@@ -865,11 +879,9 @@ function handlePlayerEvent(eventData) {
 
 // ==================== INITIALIZATION ====================
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', async function() {
     initTheme();
     
-    // Load content from Firebase or TMDB
     await loadMoviesFromFirebaseOrAPI();
     await loadTVShowsFromFirebaseOrAPI();
     
@@ -878,9 +890,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupStarRating();
 });
 
-// ==================== UTILITY & EVENTS ====================
+// ==================== EVENT LISTENERS ====================
 
-// Close modal when clicking outside
 window.onclick = function(event) {
     const playerModal = document.getElementById('playerModal');
     const authModal = document.getElementById('authModal');
@@ -893,7 +904,6 @@ window.onclick = function(event) {
     }
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closePlayer();
@@ -901,7 +911,6 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
         e.preventDefault();
