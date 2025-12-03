@@ -46,7 +46,7 @@
             </nav>
             <div class="header-controls">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search...">
+                    <input type="text" id="searchInput" placeholder="Search movies & TV shows...">
                     <button onclick="searchContent()">Search</button>
                 </div>
                 <button id="themeToggle" data-theme-toggle aria-label="Toggle theme">🌙</button>
@@ -94,6 +94,15 @@
                 <button onclick="applyFilters()">Apply Filters</button>
                 <button onclick="resetFilters()">Reset</button>
             </div>
+        </div>
+    </section>
+
+    <!-- Search Results Section -->
+    <section id="searchResults" class="content-section" style="display: none;">
+        <div class="container">
+            <h2 id="searchTitle">Search Results</h2>
+            <div class="search-grid" id="searchGrid"></div>
+            <button onclick="clearSearch()" class="clear-search-btn">Clear Search</button>
         </div>
     </section>
 
