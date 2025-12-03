@@ -3,7 +3,7 @@ const API_BASE = 'https://www.vidking.net/embed';
 const PLAYER_COLOR = 'e50914';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; // Replace with your TMDB API key
+const TMDB_API_KEY = '7901627e4352f597cecc198c6f0b33e1'; // Replace with your TMDB API key
 
 // Firebase Configuration
 const firebaseConfig = {
