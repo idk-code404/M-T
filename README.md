@@ -1,9 +1,5 @@
 # M-T
 
-Markdown
-Copy
-Code Preview
-
 # 🎬 M-T: Movies & TV Shows Streaming Platform
 
 A sleek, modern streaming website that provides access to thousands of movies and TV shows through an intuitive web interface.
