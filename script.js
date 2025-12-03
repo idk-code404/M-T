@@ -5,7 +5,7 @@ const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '7901627e4352f597cecc198c6f0b33e1'; // ⚠️ REQUIRED: Get from https://www.themoviedb.org/settings/api
 
-// Firebase Configuration
+// ⚠️ CHANGE THIS: Get from Firebase Console > Project Settings
 const firebaseConfig = {
     apiKey: "AIzaSyADR6f5fyv2hAAhDoF7wrie2wF6q0UNBOY",
     authDomain: "movie-ac414.firebaseapp.com",
@@ -16,9 +16,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log('🔥 Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+console.log('✅ Firebase initialized');
 
 // Navigation state
 let currentSection = 'movies';
@@ -34,6 +36,7 @@ function initTheme() {
     const currentTheme = savedTheme || 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
     updateThemeButton(currentTheme);
+    console.log('🎨 Theme initialized:', currentTheme);
 }
 
 function updateThemeButton(theme) {
@@ -49,17 +52,21 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeButton(newTheme);
+    console.log('🎨 Theme changed to:', newTheme);
 });
 
 // ==================== AUTHENTICATION ====================
+console.log('🔐 Setting up auth...');
 auth.onAuthStateChanged(user => {
     if (user) {
+        console.log('✅ User logged in:', user.email);
         document.getElementById('authBtn').style.display = 'none';
         document.getElementById('userProfile').style.display = 'flex';
         document.getElementById('userName').textContent = user.displayName || user.email;
         document.getElementById('continueLink').style.display = 'block';
         loadContinueWatching();
     } else {
+        console.log('ℹ️ No user logged in');
         document.getElementById('authBtn').style.display = 'block';
         document.getElementById('userProfile').style.display = 'none';
         document.getElementById('continueLink').style.display = 'none';
@@ -67,6 +74,7 @@ auth.onAuthStateChanged(user => {
 });
 
 function openAuthModal() {
+    console.log('📂 Opening auth modal');
     document.getElementById('authModal').style.display = 'block';
 }
 
@@ -93,6 +101,7 @@ function registerUser() {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     
+    console.log('📝 Registering user:', email);
     auth.createUserWithEmailAndPassword(email, password)
         .then(userCredential => {
             return userCredential.user.updateProfile({ displayName: name });
@@ -100,9 +109,11 @@ function registerUser() {
         .then(() => {
             closeAuthModal();
             alert('Registration successful!');
+            console.log('✅ User registered');
         })
         .catch(error => {
             alert('Error: ' + error.message);
+            console.error('❌ Registration error:', error);
         });
 }
 
@@ -110,19 +121,24 @@ function loginUser() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
+    console.log('🔑 Logging in user:', email);
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             closeAuthModal();
             alert('Login successful!');
+            console.log('✅ User logged in');
         })
         .catch(error => {
             alert('Error: ' + error.message);
+            console.error('❌ Login error:', error);
         });
 }
 
 function logoutUser() {
+    console.log('🚪 Logging out user');
     auth.signOut().then(() => {
         alert('Logged out successfully!');
+        console.log('✅ User logged out');
     });
 }
 
@@ -130,9 +146,12 @@ function logoutUser() {
 function toggleMobileMenu() {
     const nav = document.querySelector('.nav');
     nav.classList.toggle('active');
+    console.log('📱 Mobile menu toggled:', nav.classList.contains('active'));
 }
 
 function showSection(sectionName, clickedLink) {
+    console.log('🧭 Navigating to:', sectionName);
+    
     // Update active nav link
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
@@ -161,16 +180,19 @@ function showSection(sectionName, clickedLink) {
     if (sectionName === 'continue-watching') {
         loadContinueWatching();
     }
+    
+    console.log('✅ Section loaded:', sectionName);
 }
 
 // ==================== TMDB API FUNCTIONS ====================
 async function fetchPopularMovies() {
+    console.log('🎬 Fetching movies from TMDB...');
     try {
         const response = await fetch(
             `${TMDB_API_BASE}/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
         );
         const data = await response.json();
-        return data.results.map(movie => ({
+        const movies = data.results.map(movie => ({
             id: movie.id,
             title: movie.title,
             year: new Date(movie.release_date).getFullYear(),
@@ -178,19 +200,22 @@ async function fetchPopularMovies() {
             rating: movie.vote_average.toFixed(1),
             genre_ids: movie.genre_ids || []
         }));
+        console.log('✅ Movies fetched:', movies.length);
+        return movies;
     } catch (error) {
-        console.error('Error fetching movies:', error);
+        console.error('❌ Error fetching movies:', error);
         return [];
     }
 }
 
 async function fetchPopularTVShows() {
+    console.log('📺 Fetching TV shows from TMDB...');
     try {
         const response = await fetch(
             `${TMDB_API_BASE}/tv/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
         );
         const data = await response.json();
-        return data.results.map(show => ({
+        const shows = data.results.map(show => ({
             id: show.id,
             title: show.name,
             year: new Date(show.first_air_date).getFullYear(),
@@ -199,19 +224,22 @@ async function fetchPopularTVShows() {
             genre_ids: show.genre_ids || [],
             seasons: show.number_of_seasons || 1
         }));
+        console.log('✅ TV shows fetched:', shows.length);
+        return shows;
     } catch (error) {
-        console.error('Error fetching TV shows:', error);
+        console.error('❌ Error fetching TV shows:', error);
         return [];
     }
 }
 
 async function searchMovies(query) {
+    console.log('🔍 Searching movies for:', query);
     try {
         const response = await fetch(
             `${TMDB_API_BASE}/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
         );
         const data = await response.json();
-        return data.results.map(movie => ({
+        const results = data.results.map(movie => ({
             id: movie.id,
             title: movie.title,
             year: new Date(movie.release_date).getFullYear(),
@@ -219,19 +247,22 @@ async function searchMovies(query) {
             rating: movie.vote_average.toFixed(1),
             genre_ids: movie.genre_ids || []
         }));
+        console.log('✅ Movie search results:', results.length);
+        return results;
     } catch (error) {
-        console.error('Search error:', error);
+        console.error('❌ Movie search error:', error);
         return [];
     }
 }
 
 async function searchTVShows(query) {
+    console.log('🔍 Searching TV shows for:', query);
     try {
         const response = await fetch(
             `${TMDB_API_BASE}/search/tv?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
         );
         const data = await response.json();
-        return data.results.map(show => ({
+        const results = data.results.map(show => ({
             id: show.id,
             title: show.name,
             year: new Date(show.first_air_date).getFullYear(),
@@ -240,8 +271,10 @@ async function searchTVShows(query) {
             genre_ids: show.genre_ids || [],
             seasons: show.number_of_seasons || 1
         }));
+        console.log('✅ TV search results:', results.length);
+        return results;
     } catch (error) {
-        console.error('TV search error:', error);
+        console.error('❌ TV search error:', error);
         return [];
     }
 }
@@ -253,9 +286,9 @@ async function saveMovieToFirebase(movie) {
             ...movie,
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log('✅ Movie saved:', movie.title);
+        console.log('💾 Movie saved:', movie.title);
     } catch (error) {
-        console.error('Error saving movie:', error);
+        console.error('❌ Error saving movie:', error);
     }
 }
 
@@ -265,18 +298,20 @@ async function saveTVShowToFirebase(show) {
             ...show,
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log('✅ TV Show saved:', show.title);
+        console.log('💾 TV Show saved:', show.title);
     } catch (error) {
-        console.error('Error saving TV show:', error);
+        console.error('❌ Error saving TV show:', error);
     }
 }
 
 async function getMoviesFromFirebase() {
     try {
         const snapshot = await db.collection('movies').get();
-        return snapshot.docs.map(doc => doc.data());
+        const movies = snapshot.docs.map(doc => doc.data());
+        console.log('📂 Movies loaded from Firebase:', movies.length);
+        return movies;
     } catch (error) {
-        console.error('Error fetching movies from Firebase:', error);
+        console.error('❌ Error fetching movies from Firebase:', error);
         return [];
     }
 }
@@ -284,56 +319,13 @@ async function getMoviesFromFirebase() {
 async function getTVShowsFromFirebase() {
     try {
         const snapshot = await db.collection('tvShows').get();
-        return snapshot.docs.map(doc => doc.data());
+        const shows = snapshot.docs.map(doc => doc.data());
+        console.log('📂 TV shows loaded from Firebase:', shows.length);
+        return shows;
     } catch (error) {
-        console.error('Error fetching TV shows from Firebase:', error);
+        console.error('❌ Error fetching TV shows from Firebase:', error);
         return [];
     }
-}
-
-async function fetchAndSaveAllContent() {
-    console.log('🎬 Fetching movies from TMDB...');
-    const movies = await fetchPopularMovies();
-    for (const movie of movies) {
-        await saveMovieToFirebase(movie);
-    }
-    
-    console.log('📺 Fetching TV shows from TMDB...');
-    const tvShows = await fetchPopularTVShows();
-    for (const show of tvShows) {
-        await saveTVShowToFirebase(show);
-    }
-    
-    console.log('✨ All content saved to Firebase!');
-    return { movies, tvShows };
-}
-
-async function loadMoviesFromFirebaseOrAPI() {
-    let movies = await getMoviesFromFirebase();
-    
-    if (movies.length === 0) {
-        console.log('📂 No movies in Firebase, fetching from TMDB...');
-        movies = await fetchPopularMovies();
-        for (const movie of movies) {
-            await saveMovieToFirebase(movie);
-        }
-    }
-    
-    loadMovies(movies);
-}
-
-async function loadTVShowsFromFirebaseOrAPI() {
-    let tvShows = await getTVShowsFromFirebase();
-    
-    if (tvShows.length === 0) {
-        console.log('📂 No TV shows in Firebase, fetching from TMDB...');
-        tvShows = await fetchPopularTVShows();
-        for (const show of tvShows) {
-            await saveTVShowToFirebase(show);
-        }
-    }
-    
-    loadTVShows(tvShows);
 }
 
 // ==================== UI FUNCTIONS ====================
@@ -352,7 +344,16 @@ function createMediaCard(item, type) {
     const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFBvc3RlcjwvdGV4dD48L3N2Zz4=';
     
     const genres = item.genre_ids ? 
-        item.genre_ids.map(id => GENRES[id]).filter(g => g).join(', ') : 
+        item.genre_ids.map(id => {
+            // Genre mapping
+            const genres = {
+                28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+                99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+                27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
+                10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
+            };
+            return genres[id];
+        }).filter(g => g).join(', ') : 
         '';
     
     card.innerHTML = `
@@ -366,7 +367,10 @@ function createMediaCard(item, type) {
         </div>
     `;
     
-    card.onclick = () => type === 'movie' ? playMovie(item.id, item) : playTVShow(item.id, 1, 1, item);
+    card.onclick = () => {
+        console.log('🖱️ Card clicked:', item.title);
+        type === 'movie' ? playMovie(item.id, item) : playTVShow(item.id, 1, 1, item);
+    };
     
     return card;
 }
@@ -393,6 +397,7 @@ function loadTVShows(filteredData = null) {
 
 // ==================== SEARCH FUNCTIONS ====================
 function clearSearch() {
+    console.log('🔄 Clearing search');
     document.getElementById('searchInput').value = '';
     
     // Hide search results
@@ -417,6 +422,8 @@ async function searchContent() {
         clearSearch();
         return;
     }
+    
+    console.log('🔍 Quick searching for:', searchTerm);
     
     // Store current section before searching
     previousSection = currentSection;
@@ -484,7 +491,7 @@ async function searchContent() {
         }
         
     } catch (error) {
-        console.error('Search error:', error);
+        console.error('❌ Search error:', error);
         searchGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Search failed. Try again.</p>';
     }
 }
@@ -501,6 +508,8 @@ async function advancedSearch() {
         alert('Please enter at least one search criteria');
         return;
     }
+    
+    console.log('🔍 Advanced searching:', { query, contentType, yearFilter, ratingFilter, genreFilter });
     
     const searchGrid = document.getElementById('advancedSearchGrid');
     searchGrid.classList.add('loading');
@@ -552,13 +561,14 @@ async function advancedSearch() {
         }
         
     } catch (error) {
-        console.error('Advanced search error:', error);
+        console.error('❌ Advanced search error:', error);
         searchGrid.classList.remove('loading');
         searchGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Advanced search failed. Try again.</p>';
     }
 }
 
 function clearAdvancedSearch() {
+    console.log('🔄 Clearing advanced search');
     document.getElementById('advancedSearchInput').value = '';
     document.getElementById('contentTypeFilter').value = '';
     document.getElementById('advancedYearFilter').value = '';
@@ -569,6 +579,7 @@ function clearAdvancedSearch() {
 
 // ==================== PLAYER FUNCTIONS ====================
 function playMovie(tmdbId, movieData = null) {
+    console.log('▶️ Playing movie:', tmdbId);
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
     const episodeSelector = document.getElementById('episodeSelector');
@@ -583,6 +594,7 @@ function playMovie(tmdbId, movieData = null) {
         if (saved) {
             const progress = JSON.parse(saved);
             startTime = progress.currentTime || 0;
+            console.log('📊 Resuming from:', startTime);
         }
     }
     
@@ -607,6 +619,7 @@ function playMovie(tmdbId, movieData = null) {
 }
 
 function playTVShow(tmdbId, season = 1, episode = 1, showData = null) {
+    console.log('▶️ Playing TV show:', tmdbId, 'S' + season + 'E' + episode);
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
     const episodeSelector = document.getElementById('episodeSelector');
@@ -655,6 +668,7 @@ function loadEpisodes(tmdbId, season, showData = null) {
 }
 
 function closePlayer() {
+    console.log('❌ Closing player');
     const modal = document.getElementById('playerModal');
     const container = document.getElementById('playerContainer');
     
@@ -667,6 +681,7 @@ function loadContinueWatching() {
     const user = auth.currentUser;
     if (!user) return;
     
+    console.log('📺 Loading continue watching...');
     const continueGrid = document.getElementById('continueGrid');
     const continueSection = document.getElementById('continue-watching');
     
@@ -700,12 +715,16 @@ function loadContinueWatching() {
         };
         continueGrid.appendChild(card);
     });
+    
+    console.log('✅ Continue watching loaded');
 }
 
 // ==================== RATINGS & REVIEWS ====================
 function loadRatingsAndReviews(tmdbId, type, title, season = null, episode = null) {
     const user = auth.currentUser;
     const contentKey = `${type}_${tmdbId}_${season || ''}_${episode || ''}`;
+    
+    console.log('⭐ Loading ratings for:', contentKey);
     
     db.collection('ratings').doc(contentKey).get().then(doc => {
         if (doc.exists) {
@@ -766,6 +785,8 @@ function submitUserRating(rating) {
     
     if (!contentKey) return;
     
+    console.log('⭐ Submitting rating:', rating, 'for', contentKey);
+    
     db.collection('userRatings').doc(user.uid).collection('ratings')
         .doc(contentKey).set({
             rating: rating,
@@ -811,6 +832,8 @@ function submitRating() {
         return;
     }
     
+    console.log('📝 Submitting review for:', contentKey);
+    
     db.collection('reviews').add({
         contentKey: contentKey,
         userId: user.uid,
@@ -849,6 +872,7 @@ function loadReviews(contentKey) {
 
 // ==================== PROGRESS TRACKING ====================
 function setupProgressTracking() {
+    console.log('📊 Setting up progress tracking');
     window.addEventListener('message', function(event) {
         try {
             if (event.origin !== 'https://www.vidking.net') return;
@@ -859,7 +883,7 @@ function setupProgressTracking() {
                 handlePlayerEvent(data.data);
             }
         } catch (e) {
-            console.error('Error parsing player message:', e);
+            console.error('❌ Error parsing player message:', e);
         }
     });
 }
@@ -943,10 +967,36 @@ function handleSwipe() {
     }
 }
 
-// Add Enter key support for search
+// ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async function() {
-    await loadMoviesFromFirebaseOrAPI();
-    await loadTVShowsFromFirebaseOrAPI();
+    console.log('🚀 Initializing app...');
+    
+    initTheme();
+    
+    // Check if TMDB API key is set
+    if (TMDB_API_KEY === 'YOUR_TMDB_API_KEY_HERE') {
+        console.error('❌ ERROR: Please set your TMDB API key in script.js');
+        alert('ERROR: Please set your TMDB API key in script.js');
+        return;
+    }
+    
+    // Check if Firebase config is set
+    if (firebaseConfig.apiKey === 'YOUR_FIREBASE_API_KEY') {
+        console.error('❌ ERROR: Please set your Firebase config in script.js');
+        alert('ERROR: Please set your Firebase config in script.js');
+        return;
+    }
+    
+    // Load initial data
+    try {
+        await Promise.all([
+            loadMoviesFromFirebaseOrAPI(),
+            loadTVShowsFromFirebaseOrAPI()
+        ]);
+        console.log('✅ Content loaded');
+    } catch (error) {
+        console.error('❌ Failed to load content:', error);
+    }
     
     setupProgressTracking();
     setupStarRating();
@@ -966,6 +1016,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Show default section
     showSection('movies');
+    
+    console.log('✅ App initialized successfully');
 });
 
 // ==================== GLOBAL EVENT LISTENERS ====================
