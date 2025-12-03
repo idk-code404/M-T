@@ -283,7 +283,7 @@ function createMediaCard(item, type) {
     
     card.innerHTML = `
         <img src="${TMDB_IMAGE_BASE}${item.poster}" alt="${item.title}" 
-             onerror="this.src='${placeholder}'">
+             onerror="this.src='https://dummyimage.com/300x450/333/fff&text=No+Poster'">
         <div class="${type}-info">
             <h3>${item.title}</h3>
             <p>${item.year} • ${type === 'tv' ? item.seasons + ' Seasons' : 'Movie'}</p>
