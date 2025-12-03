@@ -2,7 +2,9 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>StreamFlix - Watch Movies & TV Shows</title>
     <link rel="stylesheet" href="style.css">
     <!-- Firebase SDK -->
@@ -21,14 +23,14 @@
             </div>
             <div id="loginForm" class="auth-form">
                 <h2>Login</h2>
-                <input type="email" id="loginEmail" placeholder="Email">
+                <input type="email" id="loginEmail" placeholder="Email" autocapitalize="none">
                 <input type="password" id="loginPassword" placeholder="Password">
                 <button onclick="loginUser()">Login</button>
             </div>
             <div id="registerForm" class="auth-form" style="display: none;">
                 <h2>Register</h2>
                 <input type="text" id="registerName" placeholder="Full Name">
-                <input type="email" id="registerEmail" placeholder="Email">
+                <input type="email" id="registerEmail" placeholder="Email" autocapitalize="none">
                 <input type="password" id="registerPassword" placeholder="Password">
                 <button onclick="registerUser()">Register</button>
             </div>
@@ -39,15 +41,20 @@
     <header class="header">
         <div class="container">
             <h1 class="logo">StreamFlix</h1>
+            
+            <!-- Hamburger Menu Button -->
+            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">☰</button>
+            
             <nav class="nav">
-                <a href="#movies" class="nav-link active" onclick="showSection('movies')">Movies</a>
-                <a href="#tv" class="nav-link" onclick="showSection('tv')">TV Shows</a>
-                <a href="#search" class="nav-link" onclick="showSection('search')">Search</a>
-                <a href="#continue-watching" class="nav-link" id="continueLink" style="display: none;" onclick="showSection('continue-watching')">Continue</a>
+                <a href="#movies" class="nav-link active" onclick="showSection('movies', this)">Movies</a>
+                <a href="#tv" class="nav-link" onclick="showSection('tv', this)">TV Shows</a>
+                <a href="#search" class="nav-link" onclick="showSection('search', this)">Search</a>
+                <a href="#continue-watching" class="nav-link" id="continueLink" style="display: none;" onclick="showSection('continue-watching', this)">Continue</a>
             </nav>
+            
             <div class="header-controls">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Quick search...">
+                    <input type="text" id="searchInput" placeholder="Quick search..." autocapitalize="none">
                     <button onclick="searchContent()">Search</button>
                 </div>
                 <button id="themeToggle" data-theme-toggle aria-label="Toggle theme">🌙</button>
@@ -68,8 +75,8 @@
         </div>
     </section>
 
-    <!-- Advanced Filters (now hidden by default) -->
-    <section class="filters-section" id="filtersSection" style="display: none;">
+    <!-- Advanced Filters -->
+    <section class="filters-section" id="filtersSection">
         <div class="container">
             <h3>Quick Filters</h3>
             <div class="filter-controls">
@@ -98,7 +105,7 @@
         </div>
     </section>
 
-    <!-- Search Results Section (for quick search) -->
+    <!-- Search Results Section -->
     <section id="searchResults" class="content-section" style="display: none;">
         <div class="container">
             <h2 id="searchTitle">Search Results</h2>
@@ -107,13 +114,13 @@
         </div>
     </section>
 
-    <!-- Dedicated Search Section (new tab) -->
+    <!-- Dedicated Search Section -->
     <section id="search" class="content-section" style="display: none;">
         <div class="container">
             <h2>Advanced Search</h2>
             <div class="advanced-search-controls">
                 <div class="search-row">
-                    <input type="text" id="advancedSearchInput" placeholder="Enter movie or TV show name...">
+                    <input type="text" id="advancedSearchInput" placeholder="Enter movie or TV show name..." autocapitalize="none">
                     <select id="contentTypeFilter">
                         <option value="">All Types</option>
                         <option value="movie">Movies Only</option>
