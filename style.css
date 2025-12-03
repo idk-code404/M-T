@@ -215,6 +215,40 @@ body {
     color: #fff;
 }
 
+/* Search Results Section */
+#searchResults {
+    background: linear-gradient(to bottom, var(--color-bg), var(--color-secondary));
+}
+
+.clear-search-btn {
+    margin-top: 20px;
+    padding: 10px 30px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.clear-search-btn:hover {
+    background: #ff0a16;
+}
+
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.search-grid h3 {
+    grid-column: 1/-1;
+    color: var(--color-primary);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
 /* Content Sections */
 .content-section {
     padding: 60px 0;
@@ -227,7 +261,7 @@ body {
 }
 
 /* Movie/TV Grid */
-.movie-grid, .tv-grid {
+.movie-grid, .tv-grid, .search-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
@@ -240,6 +274,7 @@ body {
     cursor: pointer;
     transition: transform 0.3s, box-shadow 0.3s;
     border: 1px solid var(--color-border);
+    position: relative;
 }
 
 .movie-card:hover, .tv-card:hover {
@@ -267,18 +302,10 @@ body {
     color: var(--color-text-muted);
 }
 
-.watchlist-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    font-size: 16px;
+.movie-info .genres, .tv-info .genres {
+    font-size: 12px;
+    margin-top: 5px;
+    font-style: italic;
 }
 
 /* Modal */
@@ -375,6 +402,10 @@ body {
     border-radius: 8px;
 }
 
+.rating-section h3 {
+    margin-bottom: 15px;
+}
+
 .star-rating {
     font-size: 24px;
     cursor: pointer;
@@ -383,6 +414,7 @@ body {
 
 .star-rating span {
     margin-right: 5px;
+    transition: transform 0.2s;
 }
 
 .star-rating span:hover {
@@ -399,6 +431,12 @@ body {
     margin: 10px 0;
     min-height: 80px;
     resize: vertical;
+}
+
+#avgRating {
+    margin-top: 10px;
+    font-weight: bold;
+    color: var(--color-primary);
 }
 
 .reviews-list {
@@ -429,6 +467,7 @@ body {
     display: none;
     z-index: 1500;
     border: 1px solid var(--color-border);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
 /* Authentication Modal */
@@ -454,6 +493,7 @@ body {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background 0.3s;
 }
 
 .tab-btn.active {
@@ -480,6 +520,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    transition: background 0.3s;
 }
 
 /* Responsive */
@@ -488,15 +529,19 @@ body {
         flex-direction: column;
     }
     
+    .search-box {
+        width: 100%;
+    }
+    
     .search-box input {
-        width: 200px;
+        width: 100%;
     }
     
     .hero h2 {
         font-size: 32px;
     }
     
-    .movie-grid, .tv-grid {
+    .movie-grid, .tv-grid, .search-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
@@ -507,5 +552,9 @@ body {
     .filter-controls {
         flex-direction: column;
         align-items: stretch;
+    }
+    
+    .genre-filters {
+        flex-wrap: wrap;
     }
 }
